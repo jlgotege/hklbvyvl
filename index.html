@@ -2,25 +2,34 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Responsive Unlock Screen</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Screen Unlock Simulator</title>
     <style>
-        body, html {
-            margin: 0;
-            padding: 0;
-            width: 100%;
-            height: 100%;
-            overflow: hidden; /* Убираем скроллы */
-            background-color: #000;
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+        :root {
+            /* Чистое разрешение экрана iPhone 15 Pro Max */
+            --screen-width: 430px;
+            --screen-height: 932px;
         }
 
-        /* Основной контейнер на весь экран */
-        #mainScreen {
-            width: 100vw;
-            height: 100vh;
+        body {
+            background-color: #121212;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            overflow: hidden;
+        }
+
+        /* Контейнер экрана без рамок и скруглений */
+        .screen {
+            width: var(--screen-width);
+            height: var(--screen-height);
             position: relative;
             overflow: hidden;
+            background: #000;
+            user-select: none;
         }
 
         /* Слои изображений */
@@ -30,17 +39,17 @@
             left: 0;
             width: 100%;
             height: 100%;
-            background-size: cover; /* Картинка всегда заполняет экран без полос */
+            background-size: cover;
             background-position: center;
-            background-repeat: no-repeat;
-            transition: transform 0.8s cubic-bezier(0.2, 0.8, 0.2, 1), opacity 0.6s ease-out;
+            /* Плавный переход при разблокировке */
+            transition: transform 0.8s cubic-bezier(0.2, 0.8, 0.2, 1), opacity 0.5s ease-out, filter 0.5s;
         }
 
         #home-screen {
             background-image: url('https://i.ibb.co/4Z4QhK3J/Home-Screen-i-Phone.png');
             z-index: 1;
-            transform: scale(1.1); /* Легкий зум для эффекта глубины */
-            opacity: 0;
+            transform: scale(0.9); /* Слегка уменьшен в начале */
+            filter: brightness(0.4); /* Затемнен в начале */
         }
 
         #lock-screen {
@@ -58,62 +67,59 @@
             touch-action: none;
         }
 
-        /* Сообщение об ошибке */
+        /* Текстовое уведомление */
         .error-msg {
             position: absolute;
-            top: 20%;
+            top: 15%;
             left: 50%;
             transform: translateX(-50%);
-            background: rgba(0, 0, 0, 0.3);
-            backdrop-filter: blur(20px);
-            -webkit-backdrop-filter: blur(20px);
+            background: rgba(0, 0, 0, 0.5);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
             color: white;
-            padding: 15px 30px;
-            border-radius: 12px;
-            font-size: 20px;
+            padding: 12px 24px;
+            border-radius: 8px; /* Небольшое скругление только у плашки сообщения */
+            font-size: 18px;
             font-weight: 500;
             opacity: 0;
             transition: opacity 0.3s ease;
             z-index: 5;
             pointer-events: none;
             white-space: nowrap;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
         }
 
-        /* Анимация разблокировки */
+        /* Логика анимации разблокировки */
         .unlocked #lock-screen {
-            transform: scale(1.5);
+            transform: scale(1.3);
             opacity: 0;
             pointer-events: none;
         }
 
         .unlocked #home-screen {
             transform: scale(1);
-            opacity: 1;
+            filter: brightness(1);
         }
 
         .unlocked canvas {
             display: none;
         }
 
-        /* Тряска всего экрана при ошибке */
+        /* Тряска при ошибке */
         @keyframes shake {
             0%, 100% { transform: translateX(0); }
-            20% { transform: translateX(-15px); }
-            40% { transform: translateX(15px); }
-            60% { transform: translateX(-10px); }
-            80% { transform: translateX(10px); }
+            25% { transform: translateX(-10px); }
+            75% { transform: translateX(10px); }
         }
         
         .shake-it {
-            animation: shake 0.4s cubic-bezier(.36,.07,.19,.97) both;
+            animation: shake 0.3s cubic-bezier(.36,.07,.19,.97) both;
         }
 
     </style>
 </head>
 <body>
 
-<div id="mainScreen">
+<div class="screen" id="mainScreen">
     <div id="home-screen" class="layer"></div>
     <div id="lock-screen" class="layer"></div>
     
@@ -132,22 +138,20 @@
     let attempts = 0;
     const maxAttempts = 3;
 
-    // Автоматическая подстройка размера холста под окно
-    function resizeCanvas() {
-        canvas.width = window.innerWidth;
-        canvas.height = window.innerHeight;
+    function setupCanvas() {
+        canvas.width = 430;
+        canvas.height = 932;
         
-        // Перезагружаем настройки кисти после ресайза
-        ctx.strokeStyle = 'rgba(255, 255, 255, 0.85)';
-        ctx.lineWidth = 20; // Очень жирная линия
+        ctx.strokeStyle = 'rgba(255, 255, 255, 0.8)';
+        ctx.lineWidth = 18; // Жирная линия
         ctx.lineCap = 'round';
         ctx.lineJoin = 'round';
-        ctx.shadowBlur = 10;
+        
+        ctx.shadowBlur = 15;
         ctx.shadowColor = 'rgba(255, 255, 255, 0.5)';
     }
 
-    window.addEventListener('resize', resizeCanvas);
-    resizeCanvas();
+    setupCanvas();
 
     function startDrawing(e) {
         isDrawing = true;
@@ -157,13 +161,17 @@
     function draw(e) {
         if (!isDrawing) return;
         
+        const rect = canvas.getBoundingClientRect();
         const clientX = e.clientX || (e.touches && e.touches[0].clientX);
         const clientY = e.clientY || (e.touches && e.touches[0].clientY);
         
-        ctx.lineTo(clientX, clientY);
+        const x = clientX - rect.left;
+        const y = clientY - rect.top;
+
+        ctx.lineTo(x, y);
         ctx.stroke();
         ctx.beginPath();
-        ctx.moveTo(clientX, clientY);
+        ctx.moveTo(x, y);
     }
 
     function stopDrawing() {
@@ -176,7 +184,7 @@
         if (attempts < maxAttempts) {
             handleError();
         } else {
-            unlock();
+            unlockAction();
         }
     }
 
@@ -186,23 +194,24 @@
         
         setTimeout(() => {
              screenDiv.classList.remove('shake-it');
-        }, 400);
+        }, 300);
 
         setTimeout(() => {
             ctx.clearRect(0, 0, canvas.width, canvas.height);
             errorMsg.style.opacity = '0';
-        }, 800);
+        }, 700);
     }
 
-    function unlock() {
+    function unlockAction() {
         screenDiv.classList.add('unlocked');
     }
 
-    // События
+    // События мыши
     canvas.addEventListener('mousedown', startDrawing);
     canvas.addEventListener('mousemove', draw);
     window.addEventListener('mouseup', stopDrawing);
 
+    // События тача
     canvas.addEventListener('touchstart', (e) => {
         e.preventDefault();
         startDrawing(e);
