@@ -2,77 +2,53 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>iPhone 15 Pro Max Unlock</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Responsive Unlock Screen</title>
     <style>
-        :root {
-            --iphone-width: 430px;
-            --iphone-height: 932px;
-            --bezel: 12px;
-        }
-
-        body {
-            background-color: #1a1a1a;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            min-height: 100vh;
+        body, html {
             margin: 0;
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-            overflow: hidden;
-        }
-
-        /* Phone Body */
-        .iphone {
-            width: var(--iphone-width);
-            height: var(--iphone-height);
-            background: #000;
-            border-radius: 55px;
-            position: relative;
-            box-shadow: 0 0 50px rgba(0,0,0,0.5), inset 0 0 4px 2px #444;
-            padding: var(--bezel);
-            box-sizing: border-box;
-            user-select: none;
-            transform-origin: center bottom;
-        }
-
-        /* Screen Container */
-        .screen-container {
+            padding: 0;
             width: 100%;
             height: 100%;
-            background: #000;
-            border-radius: 43px;
-            position: relative;
-            overflow: hidden;
-            -webkit-mask-image: -webkit-radial-gradient(white, black);
+            overflow: hidden; /* Убираем скроллы */
+            background-color: #000;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
         }
 
-        /* Layers */
+        /* Основной контейнер на весь экран */
+        #mainScreen {
+            width: 100vw;
+            height: 100vh;
+            position: relative;
+            overflow: hidden;
+        }
+
+        /* Слои изображений */
         .layer {
             position: absolute;
             top: 0;
             left: 0;
             width: 100%;
             height: 100%;
-            background-size: cover;
+            background-size: cover; /* Картинка всегда заполняет экран без полос */
             background-position: center;
-            transition: transform 0.8s cubic-bezier(0.2, 0.8, 0.2, 1), opacity 0.5s ease-out;
+            background-repeat: no-repeat;
+            transition: transform 0.8s cubic-bezier(0.2, 0.8, 0.2, 1), opacity 0.6s ease-out;
         }
 
         #home-screen {
             background-image: url('https://i.ibb.co/4Z4QhK3J/Home-Screen-i-Phone.png');
             z-index: 1;
-            transform: scale(0.85);
-            filter: brightness(0.5);
+            transform: scale(1.1); /* Легкий зум для эффекта глубины */
+            opacity: 0;
         }
 
         #lock-screen {
             background-image: url('https://i.ibb.co/5xTysWFB/Lock-Screen-i-Phone.png');
             z-index: 3;
-            transform-origin: center center;
         }
 
-        /* Canvas */
+        /* Холст для рисования */
         canvas {
             position: absolute;
             top: 0;
@@ -82,49 +58,51 @@
             touch-action: none;
         }
 
-        /* Error Message */
+        /* Сообщение об ошибке */
         .error-msg {
             position: absolute;
-            top: 100px;
+            top: 20%;
             left: 50%;
             transform: translateX(-50%);
-            background: rgba(255, 255, 255, 0.25);
-            backdrop-filter: blur(15px);
-            -webkit-backdrop-filter: blur(15px);
+            background: rgba(0, 0, 0, 0.3);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
             color: white;
-            padding: 12px 24px;
-            border-radius: 30px;
-            font-size: 16px;
+            padding: 15px 30px;
+            border-radius: 12px;
+            font-size: 20px;
             font-weight: 500;
             opacity: 0;
-            transition: opacity 0.3s ease-in-out;
+            transition: opacity 0.3s ease;
             z-index: 5;
             pointer-events: none;
             white-space: nowrap;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
         }
-        
-        /* Unlock Animations */
+
+        /* Анимация разблокировки */
         .unlocked #lock-screen {
-            transform: scale(1.2) translateY(-20px);
+            transform: scale(1.5);
             opacity: 0;
             pointer-events: none;
-            transition: transform 0.6s cubic-bezier(0.3, 0, 0.2, 1), opacity 0.4s ease-in;
         }
 
         .unlocked #home-screen {
             transform: scale(1);
-            filter: brightness(1);
+            opacity: 1;
         }
 
         .unlocked canvas {
             display: none;
         }
 
-        /* Shake Animation */
+        /* Тряска всего экрана при ошибке */
         @keyframes shake {
             0%, 100% { transform: translateX(0); }
-            20%, 60% { transform: translateX(-8px); }
-            40%, 80% { transform: translateX(8px); }
+            20% { transform: translateX(-15px); }
+            40% { transform: translateX(15px); }
+            60% { transform: translateX(-10px); }
+            80% { transform: translateX(10px); }
         }
         
         .shake-it {
@@ -135,43 +113,41 @@
 </head>
 <body>
 
-<div class="iphone" id="phone">
-    <div class="screen-container">
-        <div id="home-screen" class="layer"></div>
-        <div id="lock-screen" class="layer"></div>
-        
-        <canvas id="drawCanvas"></canvas>
-        
-        <div id="errorMsg" class="error-msg">Try Again</div>
-    </div>
+<div id="mainScreen">
+    <div id="home-screen" class="layer"></div>
+    <div id="lock-screen" class="layer"></div>
+    
+    <canvas id="drawCanvas"></canvas>
+    
+    <div id="errorMsg" class="error-msg">Try Again</div>
 </div>
 
 <script>
     const canvas = document.getElementById('drawCanvas');
     const ctx = canvas.getContext('2d');
-    const phone = document.getElementById('phone');
+    const screenDiv = document.getElementById('mainScreen');
     const errorMsg = document.getElementById('errorMsg');
     
     let isDrawing = false;
     let attempts = 0;
     const maxAttempts = 3;
 
-    function setupCanvas() {
-        const screenRect = document.querySelector('.screen-container').getBoundingClientRect();
-        canvas.width = screenRect.width;
-        canvas.height = screenRect.height;
+    // Автоматическая подстройка размера холста под окно
+    function resizeCanvas() {
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
         
-        ctx.strokeStyle = 'rgba(255, 255, 255, 0.9)';
-        ctx.lineWidth = 15; // Wide drawing line
+        // Перезагружаем настройки кисти после ресайза
+        ctx.strokeStyle = 'rgba(255, 255, 255, 0.85)';
+        ctx.lineWidth = 20; // Очень жирная линия
         ctx.lineCap = 'round';
         ctx.lineJoin = 'round';
-        
-        ctx.shadowBlur = 12;
-        ctx.shadowColor = 'rgba(255,255,255, 0.6)';
+        ctx.shadowBlur = 10;
+        ctx.shadowColor = 'rgba(255, 255, 255, 0.5)';
     }
 
-    setupCanvas();
-    window.addEventListener('resize', setupCanvas);
+    window.addEventListener('resize', resizeCanvas);
+    resizeCanvas();
 
     function startDrawing(e) {
         isDrawing = true;
@@ -181,17 +157,13 @@
     function draw(e) {
         if (!isDrawing) return;
         
-        const rect = canvas.getBoundingClientRect();
         const clientX = e.clientX || (e.touches && e.touches[0].clientX);
         const clientY = e.clientY || (e.touches && e.touches[0].clientY);
         
-        const x = clientX - rect.left;
-        const y = clientY - rect.top;
-
-        ctx.lineTo(x, y);
+        ctx.lineTo(clientX, clientY);
         ctx.stroke();
         ctx.beginPath();
-        ctx.moveTo(x, y);
+        ctx.moveTo(clientX, clientY);
     }
 
     function stopDrawing() {
@@ -204,16 +176,16 @@
         if (attempts < maxAttempts) {
             handleError();
         } else {
-            unlockPhone();
+            unlock();
         }
     }
 
     function handleError() {
         errorMsg.style.opacity = '1';
-        phone.classList.add('shake-it');
+        screenDiv.classList.add('shake-it');
         
         setTimeout(() => {
-             phone.classList.remove('shake-it');
+             screenDiv.classList.remove('shake-it');
         }, 400);
 
         setTimeout(() => {
@@ -222,16 +194,15 @@
         }, 800);
     }
 
-    function unlockPhone() {
-        phone.classList.add('unlocked');
+    function unlock() {
+        screenDiv.classList.add('unlocked');
     }
 
-    // Mouse Listeners
+    // События
     canvas.addEventListener('mousedown', startDrawing);
     canvas.addEventListener('mousemove', draw);
     window.addEventListener('mouseup', stopDrawing);
 
-    // Touch Listeners
     canvas.addEventListener('touchstart', (e) => {
         e.preventDefault();
         startDrawing(e);
