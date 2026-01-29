@@ -2,37 +2,30 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Screen Unlock Simulator</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>Safari Optimized Unlock</title>
     <style>
-        :root {
-            /* Чистое разрешение экрана iPhone 15 Pro Max */
-            --screen-width: 430px;
-            --screen-height: 932px;
-        }
-
-        body {
-            background-color: #121212;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            min-height: 100vh;
+        /* Блокируем любые отскоки и прокрутки */
+        html, body {
             margin: 0;
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            padding: 0;
+            width: 100%;
+            /* Решение для Safari: svh гарантирует, что всё влезет */
+            height: 100vh;
+            height: 100svh; 
             overflow: hidden;
+            background-color: #000;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            position: fixed; /* Предотвращает "резиновый" скролл в Safari */
         }
 
-        /* Контейнер экрана без рамок и скруглений */
-        .screen {
-            width: var(--screen-width);
-            height: var(--screen-height);
+        #mainScreen {
+            width: 100%;
+            height: 100%;
             position: relative;
             overflow: hidden;
-            background: #000;
-            user-select: none;
         }
 
-        /* Слои изображений */
         .layer {
             position: absolute;
             top: 0;
@@ -41,15 +34,15 @@
             height: 100%;
             background-size: cover;
             background-position: center;
-            /* Плавный переход при разблокировке */
-            transition: transform 0.8s cubic-bezier(0.2, 0.8, 0.2, 1), opacity 0.5s ease-out, filter 0.5s;
+            background-repeat: no-repeat;
+            transition: transform 0.8s cubic-bezier(0.2, 0.8, 0.2, 1), opacity 0.6s ease-out;
         }
 
         #home-screen {
             background-image: url('https://i.ibb.co/4Z4QhK3J/Home-Screen-i-Phone.png');
             z-index: 1;
-            transform: scale(0.9); /* Слегка уменьшен в начале */
-            filter: brightness(0.4); /* Затемнен в начале */
+            transform: scale(1.1);
+            opacity: 0;
         }
 
         #lock-screen {
@@ -57,7 +50,6 @@
             z-index: 3;
         }
 
-        /* Холст для рисования */
         canvas {
             position: absolute;
             top: 0;
@@ -67,64 +59,57 @@
             touch-action: none;
         }
 
-        /* Текстовое уведомление */
         .error-msg {
             position: absolute;
-            top: 15%;
+            top: 15%; /* Сместил чуть выше, чтобы в Safari было лучше видно */
             left: 50%;
             transform: translateX(-50%);
-            background: rgba(0, 0, 0, 0.5);
-            backdrop-filter: blur(10px);
-            -webkit-backdrop-filter: blur(10px);
+            background: rgba(0, 0, 0, 0.4);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
             color: white;
             padding: 12px 24px;
-            border-radius: 8px; /* Небольшое скругление только у плашки сообщения */
+            border-radius: 12px;
             font-size: 18px;
-            font-weight: 500;
             opacity: 0;
             transition: opacity 0.3s ease;
             z-index: 5;
             pointer-events: none;
-            white-space: nowrap;
         }
 
-        /* Логика анимации разблокировки */
+        /* Анимация разблокировки */
         .unlocked #lock-screen {
-            transform: scale(1.3);
+            transform: scale(1.5);
             opacity: 0;
             pointer-events: none;
         }
 
         .unlocked #home-screen {
             transform: scale(1);
-            filter: brightness(1);
+            opacity: 1;
         }
 
         .unlocked canvas {
             display: none;
         }
 
-        /* Тряска при ошибке */
         @keyframes shake {
             0%, 100% { transform: translateX(0); }
-            25% { transform: translateX(-10px); }
-            75% { transform: translateX(10px); }
+            20%, 60% { transform: translateX(-10px); }
+            40%, 80% { transform: translateX(10px); }
         }
         
         .shake-it {
-            animation: shake 0.3s cubic-bezier(.36,.07,.19,.97) both;
+            animation: shake 0.4s ease-in-out;
         }
-
     </style>
 </head>
 <body>
 
-<div class="screen" id="mainScreen">
+<div id="mainScreen">
     <div id="home-screen" class="layer"></div>
     <div id="lock-screen" class="layer"></div>
-    
     <canvas id="drawCanvas"></canvas>
-    
     <div id="errorMsg" class="error-msg">Try Again</div>
 </div>
 
@@ -136,22 +121,23 @@
     
     let isDrawing = false;
     let attempts = 0;
-    const maxAttempts = 3;
 
-    function setupCanvas() {
-        canvas.width = 430;
-        canvas.height = 932;
+    function resize() {
+        // Используем фактическую высоту окна, которую видит Safari
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
         
-        ctx.strokeStyle = 'rgba(255, 255, 255, 0.8)';
-        ctx.lineWidth = 18; // Жирная линия
+        ctx.strokeStyle = 'white';
+        ctx.lineWidth = 20;
         ctx.lineCap = 'round';
         ctx.lineJoin = 'round';
-        
-        ctx.shadowBlur = 15;
+        ctx.shadowBlur = 10;
         ctx.shadowColor = 'rgba(255, 255, 255, 0.5)';
     }
 
-    setupCanvas();
+    window.addEventListener('resize', resize);
+    window.addEventListener('orientationchange', resize);
+    resize();
 
     function startDrawing(e) {
         isDrawing = true;
@@ -160,14 +146,8 @@
 
     function draw(e) {
         if (!isDrawing) return;
-        
-        const rect = canvas.getBoundingClientRect();
-        const clientX = e.clientX || (e.touches && e.touches[0].clientX);
-        const clientY = e.clientY || (e.touches && e.touches[0].clientY);
-        
-        const x = clientX - rect.left;
-        const y = clientY - rect.top;
-
+        const x = e.clientX || (e.touches && e.touches[0].clientX);
+        const y = e.clientY || (e.touches && e.touches[0].clientY);
         ctx.lineTo(x, y);
         ctx.stroke();
         ctx.beginPath();
@@ -178,53 +158,35 @@
         if (!isDrawing) return;
         isDrawing = false;
         ctx.beginPath();
-
         attempts++;
         
-        if (attempts < maxAttempts) {
-            handleError();
+        if (attempts < 3) {
+            errorMsg.style.opacity = '1';
+            screenDiv.classList.add('shake-it');
+            setTimeout(() => {
+                screenDiv.classList.remove('shake-it');
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+                errorMsg.style.opacity = '0';
+            }, 700);
         } else {
-            unlockAction();
+            screenDiv.classList.add('unlocked');
         }
     }
 
-    function handleError() {
-        errorMsg.style.opacity = '1';
-        screenDiv.classList.add('shake-it');
-        
-        setTimeout(() => {
-             screenDiv.classList.remove('shake-it');
-        }, 300);
-
-        setTimeout(() => {
-            ctx.clearRect(0, 0, canvas.width, canvas.height);
-            errorMsg.style.opacity = '0';
-        }, 700);
-    }
-
-    function unlockAction() {
-        screenDiv.classList.add('unlocked');
-    }
-
-    // События мыши
     canvas.addEventListener('mousedown', startDrawing);
     canvas.addEventListener('mousemove', draw);
     window.addEventListener('mouseup', stopDrawing);
 
-    // События тача
     canvas.addEventListener('touchstart', (e) => {
         e.preventDefault();
         startDrawing(e);
     }, { passive: false });
-    
     canvas.addEventListener('touchmove', (e) => {
-         e.preventDefault();
+        e.preventDefault();
         draw(e);
     }, { passive: false });
-    
     canvas.addEventListener('touchend', stopDrawing);
 
 </script>
-
 </body>
 </html>
